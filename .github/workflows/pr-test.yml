@@ -1,0 +1,53 @@
+name: Pull Request Tests
+
+on:
+  pull_request:
+    branches: "main"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  format-and-test:
+    name: Code Quality and Tests
+    runs-on: ubuntu-24.04
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6
+
+      - name: Setup HiHome Environment
+        uses: ./.github/actions/setup-environment
+
+      # Workspace Security Checks (Frontend & Backend)
+      - name: Security Audit
+        run: pnpm audit --audit-level high
+
+      - name: Format Check
+        run: pnpm run format:check
+
+      - name: Run Tests
+        run: pnpm test
+
+      - name: Go Format Check
+        working-directory: ./ext-api-service
+        run: if [ "$(gofmt -s -l . | wc -l)" -gt 0 ]; then echo "Go code is not formatted"; exit 1; fi
+
+      - name: Go Test
+        working-directory: ./ext-api-service
+        run: go test -v ./...
+
+  success:
+    runs-on: ubuntu-24.04
+    needs:
+      - build
+      - format-and-test
+    # run unless jobs were cancelled 
+    if: always() && !contains(join(needs.*.result, ','), 'cancelled')
+    steps:
+      - name: Verify that there were no failures
+        run: ${{ !contains(join(needs.*.result, ','), 'failure') }}
