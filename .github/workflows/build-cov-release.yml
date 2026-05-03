@@ -95,20 +95,23 @@ jobs:
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend
+          context: .
+          file: ./frontend/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/hihome-frontend:v${{ needs.release.outputs.new_release_version }},ghcr.io/${{ github.repository }}/hihome-frontend:latest
 
       - name: Build and push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
+          context: .
+          file: ./backend/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/hihome-backend:v${{ needs.release.outputs.new_release_version }},ghcr.io/${{ github.repository }}/hihome-backend:latest
 
       - name: Build and push ext-api-service
         uses: docker/build-push-action@v5
         with:
-          context: ./ext-api-service
+          context: .
+          file: ./ext-api-service/Dockerfile
           push: true
           tags: ghcr.io/${{ github.repository }}/hihome-ext-api-service:v${{ needs.release.outputs.new_release_version }},ghcr.io/${{ github.repository }}/hihome-ext-api-service:latest
